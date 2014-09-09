@@ -46,34 +46,29 @@ b2grad = zeros(size(b2));
 m = size(data, 2);
 rho = 0;
 
-parfor i = 1:m
-    a1 = data(:,i);
-    z2 = W1 * a1 + b1;
-    a2 = sigmoid(z2);
-    rho = rho + 1/m * a2;
-end
 
-parfor i = 1:m
-    a1 = data(:,i);
-    z2 = W1 * a1 + b1;
-    a2 = sigmoid(z2);
-    z3 = W2 * a2 + b2;
-    a3 = sigmoid(z3);
-    
-    
-    
-    cost = cost + 1/2/m*sum((a3 - a1).^2) ;
-    
-    d3 = 1/m*(a3 - a1) .* a3 .* (1 - a3);
-    
-    d2 = (W2' * d3 + beta/m * (-sparsityParam ./ rho + (1-sparsityParam) ./ (1-rho))) .* a2 .* (1 - a2);
-    
-    W2grad = W2grad + d3 * a2';
-    W1grad = W1grad + d2 * a1';
-    b2grad = b2grad + d3;
-    b1grad = b1grad + d2;
-    
-end
+a1 = data;
+z2 = bsxfun(@plus, W1 * a1 , b1);
+a2 = sigmoid(z2);
+rho = 1/m * sum(a2,2);
+
+
+
+z3 = bsxfun(@plus, W2 * a2 , b2);
+a3 = sigmoid(z3);
+
+
+cost = 1/2/m * sum(sum((a3 - a1).^2)) ;
+
+d3 = 1/m*(a3 - a1) .* a3 .* (1 - a3);
+
+d2 = bsxfun(@plus, W2' * d3 , beta/m * (-sparsityParam ./ rho + (1-sparsityParam) ./ (1-rho))) .* a2 .* (1 - a2);
+
+W2grad(:,:) = d3 * a2';
+W1grad(:,:) = d2 * a1';
+b2grad(:) = sum(d3,2);
+b1grad(:) = sum(d2,2);
+
 
 cost = cost + beta * sum(sparsityParam * log(sparsityParam ./ rho) + ...
         (1-sparsityParam) * log((1-sparsityParam) ./ (1-rho)) ) + ...

@@ -61,15 +61,33 @@ groundTruth = full(sparse(labels, 1:M, 1));
 %                match exactly that of the size of the matrices in stack.
 %
 
+a = cell(numel(stack)+1,1);
+z = cell(numel(stack)+1,1);
+d = cell(numel(stack)+1,1);
+
+a{1} = data;
+for i = 1:numel(stack)
+    z{i+1} = stack{i}.w * a{i} + repmat(stack{i}.b, 1, size(a{i},2));
+    a{i+1} = sigmoid(z{i+1});
+end
 
 
+tmp = exp(softmaxTheta * a{numel(stack)+1});
+pred = tmp ./ repmat(sum(tmp),size(tmp,1),1);
+cost = -1/M * sum(log(pred(labels(:)+(0:M-1)'*size(pred,1))) );
 
+softmaxThetaGrad(:,:) = 1/M *  (pred - groundTruth) * a{numel(stack)+1}';
 
-
-
-
-
-
+i = numel(stack) + 1;
+d{i} = 1/M * softmaxTheta' * (pred - groundTruth) .* a{i} .* (1 - a{i});
+stackgrad{i-1}.w = d{i} * a{i-1}';
+stackgrad{i-1}.b = sum(d{i},2);
+    
+for i = numel(stack):-1:2
+    d{i} = stack{i}.w' * d{i+1} .* a{i} .* (1-a{i});
+    stackgrad{i-1}.w = d{i} * a{i-1}';
+    stackgrad{i-1}.b = sum(d{i}, 2);
+end
 
 
 

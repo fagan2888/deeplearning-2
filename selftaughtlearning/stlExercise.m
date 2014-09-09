@@ -34,10 +34,10 @@ maxIter = 400;
 mnistData   = loadMNISTImages('train-images.idx3-ubyte');
 mnistLabels = loadMNISTLabels('train-labels.idx1-ubyte');
 
-% % for debug
-% mnistData = mnistData(:,1:100);
-% mnistLabels = mnistLabels(1:100);
-% Set Unlabeled Set (All Images)
+% for debug
+mnistData = mnistData(:,1:100);
+mnistLabels = mnistLabels(1:100);
+Set Unlabeled Set (All Images)
 
 % Simulate a Labeled and Unlabeled set
 labeledSet   = find(mnistLabels >= 0 & mnistLabels <= 4);
