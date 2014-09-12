@@ -20,7 +20,7 @@ numgrad = zeros(size(theta));
 
 
 
-epsilon = 1e-5;
+epsilon = 1e-4;
 for i = 1:length(numgrad)
     one = zeros(size(numgrad));
     one(i) = 1;
