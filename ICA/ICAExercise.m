@@ -42,30 +42,30 @@ ZCAWhite = u * diag(1 ./ sqrt(diag(s))) * u';
 patches = ZCAWhite * patches;
 
 %%======================================================================
-%% STEP 3: ICA cost functions
-%  Implement the cost function for orthornomal ICA (you don't have to 
-%  enforce the orthonormality constraint in the cost function) 
-%  in the function orthonormalICACost in orthonormalICACost.m.
-%  Once you have implemented the function, check the gradient.
-
-% Use less features and smaller patches for speed
-numFeatures = 5;
-patches = patches(1:3, 1:5);
-visibleSize = 3;
-numPatches = 5;
-
-weightMatrix = rand(numFeatures, visibleSize);
-
-[cost, grad] = orthonormalICACost(weightMatrix, visibleSize, numFeatures, patches, epsilon);
-
-numGrad = computeNumericalGradient( @(x) orthonormalICACost(x, visibleSize, numFeatures, patches, epsilon), weightMatrix(:) );
-% Uncomment to display the numeric and analytic gradients side-by-side
+% %% STEP 3: ICA cost functions
+% %  Implement the cost function for orthornomal ICA (you don't have to 
+% %  enforce the orthonormality constraint in the cost function) 
+% %  in the function orthonormalICACost in orthonormalICACost.m.
+% %  Once you have implemented the function, check the gradient.
+% 
+% % Use less features and smaller patches for speed
+% numFeatures = 3;
+% patches = patches(1:5, 1:5);
+% visibleSize = 5;
+% numPatches = 5;
+% 
+% weightMatrix = rand(numFeatures, visibleSize);
+% 
+% [cost, grad] = orthonormalICACost(weightMatrix, visibleSize, numFeatures, patches, epsilon);
+% 
+% numGrad = computeNumericalGradient( @(x) orthonormalICACost(x, visibleSize, numFeatures, patches, epsilon), weightMatrix(:) );
+% % Uncomment to display the numeric and analytic gradients side-by-side
 % disp([numGrad grad]); 
-diff = norm(numGrad-grad)/norm(numGrad+grad);
-fprintf('Orthonormal ICA difference: %g\n', diff);
-assert(diff < 1e-7, 'Difference too large. Check your analytic gradients.');
-
-fprintf('Congratulations! Your gradients seem okay.\n');
+% diff = norm(numGrad-grad)/norm(numGrad+grad);
+% fprintf('Orthonormal ICA difference: %g\n', diff);
+% assert(diff < 1e-7, 'Difference too large. Check your analytic gradients.');
+% 
+% fprintf('Congratulations! Your gradients seem okay.\n');
 
 %%======================================================================
 %% STEP 4: Optimization for orthonormal ICA
@@ -104,11 +104,15 @@ for iteration = 1:10000
                        
     grad = reshape(grad, size(weightMatrix));
     newCost = Inf;        
-    linearDelta = sum(sum(grad .* grad));
+    linearDelta = sqrt(sum(sum(grad .* grad)));
+    
+    if linearDelta < 1e-5 || t < 1e-10
+        break;
+    end
     
     % Perform the backtracking line search
     while 1
-        considerWeightMatrix = weightMatrix - alpha * grad;
+        considerWeightMatrix = weightMatrix - t * alpha * grad;
         % -------------------- YOUR CODE HERE --------------------
         % Instructions:
         %   Write code to project considerWeightMatrix back into the space
@@ -120,13 +124,13 @@ for iteration = 1:10000
         %   optimization.
         
         % Project considerWeightMatrix such that it satisfies WW^T = I
-        error('Fill in the code for the projection here');        
+        considerWeightMatrix = (sqrtm(considerWeightMatrix * considerWeightMatrix')) \ considerWeightMatrix;
         
-        % Verify that the projection is correct
-        temp = considerWeightMatrix * considerWeightMatrix';
-        temp = temp - eye(numFeatures);
-        assert(sum(temp(:).^2) < 1e-23, 'considerWeightMatrix does not satisfy WW^T = I. Check your projection again');
-        error('Projection seems okay. Comment out verification code before running optimization.');
+%         % Verify that the projection is correct
+%         temp = considerWeightMatrix * considerWeightMatrix';
+%         temp = temp - eye(numFeatures);
+%         assert(sum(temp(:).^2) < 1e-23, 'considerWeightMatrix does not satisfy WW^T = I. Check your projection again');
+%         error('Projection seems okay. Comment out verification code before running optimization.');
         
         % -------------------- YOUR CODE HERE --------------------                                        
 
@@ -136,6 +140,7 @@ for iteration = 1:10000
         else
             break;
         end
+        
     end
    
     lastCost = newCost;
@@ -149,14 +154,14 @@ for iteration = 1:10000
     grad = newGrad;
            
     % Visualize the learned bases as we go along    
-    if mod(iteration, 1000) == 0
+    if mod(iteration, 10) == 0
         duration = toc(startTime);
         % Visualize the learned bases over time in different figures so 
         % we can get a feel for the slow rate of convergence
-        figure(floor(iteration /  1000));
+        figure(floor(iteration /  10));
         displayColorNetwork(weightMatrix'); 
     end
-                   
+               
 end
 
 % Visualize the learned bases
